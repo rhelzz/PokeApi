@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchPokemon(offset, limit);
 });
 
-// Tambahkan event listener untuk form pencarian
 searchForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const searchTerm = searchInput.value.trim().toLowerCase();
@@ -56,11 +55,14 @@ function searchPokemon(searchTerm) {
 
 function displayPokemonList(pokemonList) {
     pokemonContainer.innerHTML = '';
-    pokemonList.forEach(pokemon => {
+    const fetchPromises = pokemonList.map(pokemon => {
         const url = pokemon.url || `https://pokeapi.co/api/v2/pokemon/${pokemon.id}`;
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
+        return fetch(url).then(response => response.json());
+    });
+
+    Promise.all(fetchPromises)
+        .then(pokemonDataList => {
+            pokemonDataList.forEach(data => {
                 const pokemonCard = document.createElement('div');
                 pokemonCard.classList.add('pokemon-card');
                 pokemonCard.innerHTML = `
@@ -71,7 +73,10 @@ function displayPokemonList(pokemonList) {
                 `;
                 pokemonContainer.appendChild(pokemonCard);
             });
-    });
+        })
+        .catch(error => {
+            console.error('Error fetching Pokemon data:', error);
+        });
 }
 
 function setupPagination(totalItems) {
