@@ -71,32 +71,6 @@ function displayPokemonList(pokemonList) {
                     <p>ID: ${data.id}</p>
                     <p>Type: ${data.types.map(typeInfo => typeInfo.type.name).join(', ')}</p>
                 `;
-                pokemonContainer.appendChild(pokemonCard);
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching Pokemon data:', error);
-        });
-}
-
-function displayPokemonList(pokemonList) {
-    pokemonContainer.innerHTML = '';
-    const fetchPromises = pokemonList.map(pokemon => {
-        const url = pokemon.url || `https://pokeapi.co/api/v2/pokemon/${pokemon.id}`;
-        return fetch(url).then(response => response.json());
-    });
-
-    Promise.all(fetchPromises)
-        .then(pokemonDataList => {
-            pokemonDataList.forEach(data => {
-                const pokemonCard = document.createElement('div');
-                pokemonCard.classList.add('pokemon-card');
-                pokemonCard.innerHTML = `
-                    <img src="${data.sprites.front_default}" alt="${data.name}">
-                    <h2>${data.name.charAt(0).toUpperCase() + data.name.slice(1)}</h2>
-                    <p>ID: ${data.id}</p>
-                    <p>Type: ${data.types.map(typeInfo => typeInfo.type.name).join(', ')}</p>
-                `;
                 pokemonCard.addEventListener('click', () => {
                     openModal(data);
                 });
@@ -133,7 +107,6 @@ function openModal(pokemon) {
     `;
     modal.style.display = 'block';
 }
-
 
 function setupPagination(totalItems) {
     pagination.innerHTML = '';
