@@ -53,6 +53,10 @@ function searchPokemon(searchTerm) {
         });
 }
 
+function getTypeClass(type) {
+    return `type-${type}`;
+}
+
 function displayPokemonList(pokemonList) {
     pokemonContainer.innerHTML = '';
     const fetchPromises = pokemonList.map(pokemon => {
@@ -63,13 +67,16 @@ function displayPokemonList(pokemonList) {
     Promise.all(fetchPromises)
         .then(pokemonDataList => {
             pokemonDataList.forEach(data => {
+                const types = data.types.map(typeInfo => typeInfo.type.name);
                 const pokemonCard = document.createElement('div');
-                pokemonCard.classList.add('pokemon-card');
+                pokemonCard.classList.add('pokemon-card', ...types.map(type => getTypeClass(type)));
                 pokemonCard.innerHTML = `
                     <img src="${data.sprites.front_default}" alt="${data.name}">
                     <h2>${data.name.charAt(0).toUpperCase() + data.name.slice(1)}</h2>
                     <p>ID: ${data.id}</p>
-                    <p>Type: ${data.types.map(typeInfo => typeInfo.type.name).join(', ')}</p>
+                    <div class="types">
+                        ${types.map(type => `<span class="type ${getTypeClass(type)}">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`).join(' ')}
+                    </div>
                 `;
                 pokemonCard.addEventListener('click', () => {
                     openModal(data);
@@ -82,6 +89,59 @@ function displayPokemonList(pokemonList) {
         });
 }
 
+function setupPagination(totalItems) {
+    pagination.innerHTML = '';
+    const totalPages = Math.ceil(totalItems / limit);
+    const maxVisibleButtons = Math.min(maxVisiblePages, totalPages);
+
+    const createPageButton = (page) => {
+        const button = document.createElement('button');
+        button.textContent = page;
+        if (page === currentPage) button.disabled = true;
+        button.addEventListener('click', () => {
+            currentPage = page;
+            offset = (page - 1) * limit;
+            fetchPokemon(offset, limit);
+        });
+        return button;
+    };
+
+    if (currentPage > 1) {
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '<';
+        prevButton.addEventListener('click', () => {
+            currentPage--;
+            offset = (currentPage - 1) * limit;
+            fetchPokemon(offset, limit);
+        });
+        pagination.appendChild(prevButton);
+    }
+
+    const half = Math.floor(maxVisibleButtons / 2);
+    let startPage = Math.max(currentPage - half, 1);
+    let endPage = Math.min(startPage + maxVisibleButtons - 1, totalPages);
+
+    if (endPage - startPage + 1 < maxVisibleButtons) {
+        startPage = Math.max(endPage - maxVisibleButtons + 1, 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        pagination.appendChild(createPageButton(i));
+    }
+
+    if (currentPage < totalPages) {
+        const nextButton = document.createElement('button');
+        nextButton.textContent = '>';
+        nextButton.addEventListener('click', () => {
+            currentPage++;
+            offset = (currentPage - 1) * limit;
+            fetchPokemon(offset, limit);
+        });
+        pagination.appendChild(nextButton);
+    }
+}
+
+// Modal handling
 const modal = document.getElementById('pokemonModal');
 const closeButton = document.querySelector('.close-button');
 
@@ -97,16 +157,20 @@ window.addEventListener('click', (event) => {
 
 function openModal(pokemon) {
     const modalBody = document.getElementById('modalBody');
+    const types = pokemon.types.map(typeInfo => typeInfo.type.name);
     modalBody.innerHTML = `
         <img src="${pokemon.sprites.front_default}" alt="${pokemon.name}">
         <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
         <p>ID: ${pokemon.id}</p>
-        <p>Type: ${pokemon.types.map(typeInfo => typeInfo.type.name).join(', ')}</p>
+        <div class="types">
+            ${types.map(type => `<span class="type ${getTypeClass(type)}">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`).join(' ')}
+        </div>
         <p>Height: ${pokemon.height}</p>
         <p>Weight: ${pokemon.weight}</p>
     `;
     modal.style.display = 'block';
 }
+
 
 function setupPagination(totalItems) {
     pagination.innerHTML = '';
