@@ -79,6 +79,62 @@ function displayPokemonList(pokemonList) {
         });
 }
 
+function displayPokemonList(pokemonList) {
+    pokemonContainer.innerHTML = '';
+    const fetchPromises = pokemonList.map(pokemon => {
+        const url = pokemon.url || `https://pokeapi.co/api/v2/pokemon/${pokemon.id}`;
+        return fetch(url).then(response => response.json());
+    });
+
+    Promise.all(fetchPromises)
+        .then(pokemonDataList => {
+            pokemonDataList.forEach(data => {
+                const pokemonCard = document.createElement('div');
+                pokemonCard.classList.add('pokemon-card');
+                pokemonCard.innerHTML = `
+                    <img src="${data.sprites.front_default}" alt="${data.name}">
+                    <h2>${data.name.charAt(0).toUpperCase() + data.name.slice(1)}</h2>
+                    <p>ID: ${data.id}</p>
+                    <p>Type: ${data.types.map(typeInfo => typeInfo.type.name).join(', ')}</p>
+                `;
+                pokemonCard.addEventListener('click', () => {
+                    openModal(data);
+                });
+                pokemonContainer.appendChild(pokemonCard);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching Pokemon data:', error);
+        });
+}
+
+const modal = document.getElementById('pokemonModal');
+const closeButton = document.querySelector('.close-button');
+
+closeButton.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+function openModal(pokemon) {
+    const modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = `
+        <img src="${pokemon.sprites.front_default}" alt="${pokemon.name}">
+        <h2>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h2>
+        <p>ID: ${pokemon.id}</p>
+        <p>Type: ${pokemon.types.map(typeInfo => typeInfo.type.name).join(', ')}</p>
+        <p>Height: ${pokemon.height}</p>
+        <p>Weight: ${pokemon.weight}</p>
+    `;
+    modal.style.display = 'block';
+}
+
+
 function setupPagination(totalItems) {
     pagination.innerHTML = '';
     const totalPages = Math.ceil(totalItems / limit);
